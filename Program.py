@@ -1,4 +1,4 @@
-from Gui import *
+from gui import *
 import sys
 
 class Program():
