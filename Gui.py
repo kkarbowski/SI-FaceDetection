@@ -12,41 +12,38 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(QSize(1024, 768))    
         self.setWindowTitle("Face Swaping Application") 
         
-        centralWidget = QWidget(self)          
-        self.setCentralWidget(centralWidget)   
+        self._centralWidget = QWidget(self)          
+        self.setCentralWidget(self._centralWidget)   
  
-        gridLayout = QGridLayout(self)     
-        centralWidget.setLayout(gridLayout)  
+        self._gridLayout = QGridLayout(self)     
+        self._centralWidget.setLayout(self._gridLayout)  
  
         title = QLabel("123", self) 
         title.setAlignment(QtCore.Qt.AlignCenter) 
-        gridLayout.addWidget(title, 0, 0)
+        self._gridLayout.addWidget(title, 0, 0)
 
 class Capture():
     def __init__(self):
-        self.capturing = False
-        self.c = cv2.VideoCapture(0)
+        self._capturing = False
+        self._c = cv2.VideoCapture(0)
 
     def startCapture(self):
         print("pressed start")
-        self.capturing = True
-        cap = self.c
-        while(self.capturing):
-            ret, frame = cap.read()
-            cv2.imshow("Capture", frame)
+        self._capturing = True
+        while(self._capturing):
+            cv2.imshow("Capture", self._c.read()[1])
             cv2.waitKey(5)
         cv2.destroyAllWindows()
 
     def endCapture(self):
         print("pressed End")
-        self.capturing = False
+        self._capturing = False
 
     def quitCapture(self):
         print("pressed Quit")
-        cap = self.c
-        self.capturing = False
+        self._capturing = False
         cv2.destroyAllWindows()
-        cap.release()
+        self._c.release()
         QtCore.QCoreApplication.quit()
 
 
@@ -56,20 +53,20 @@ class Window(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.setWindowTitle('Control Panel')
 
-        self.capture = Capture()
-        self.start_button = QtWidgets.QPushButton('Start',self)
-        self.start_button.clicked.connect(self.capture.startCapture)
+        self._capture = Capture()
+        self._start_button = QtWidgets.QPushButton('Start',self)
+        self._start_button.clicked.connect(self._capture.startCapture)
 
-        self.end_button = QtWidgets.QPushButton('End',self)
-        self.end_button.clicked.connect(self.capture.endCapture)
+        self._end_button = QtWidgets.QPushButton('End',self)
+        self._end_button.clicked.connect(self._capture.endCapture)
 
-        self.quit_button = QtWidgets.QPushButton('Quit',self)
-        self.quit_button.clicked.connect(self.capture.quitCapture)
+        self._quit_button = QtWidgets.QPushButton('Quit',self)
+        self._quit_button.clicked.connect(self._capture.quitCapture)
 
         vbox = QtWidgets.QVBoxLayout(self)
-        vbox.addWidget(self.start_button)
-        vbox.addWidget(self.end_button)
-        vbox.addWidget(self.quit_button)
+        vbox.addWidget(self._start_button)
+        vbox.addWidget(self._end_button)
+        vbox.addWidget(self._quit_button)
 
         self.setLayout(vbox)
         self.setGeometry(100,100,200,200)
