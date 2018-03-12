@@ -54,4 +54,3 @@ def detect_faces_dlib(file_name):
 
     t2 = time.time()
     return positions_of_faces, t2-t1
-
