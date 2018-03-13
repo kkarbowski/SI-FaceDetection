@@ -2,7 +2,7 @@ import cv2
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget, QPushButton, QDialog, QFileDialog
-from PyQt5.QtCore import QSize, QPoint, QTimer   
+from PyQt5.QtCore import QSize, QPoint, QTimer, QRect
 from PyQt5.QtGui import QImage, QPainter, QPixmap
 
 class MainWindow(QMainWindow):
@@ -14,17 +14,20 @@ class MainWindow(QMainWindow):
         self.resize(1024, 768)
         self._central_widget = QtWidgets.QWidget(self)
         self._central_widget.setObjectName("_central_widget")
-        
+        self._selected_icon = None
+        self._click_x = 0
+        self._click_y = 0
+
         #video widget
         self._video = QtWidgets.QLabel(self._central_widget)
-        self._video.setGeometry(QtCore.QRect(460, 60, 555, 370))
+        self._video.setGeometry(QtCore.QRect(420, 25, 580, 435))
         self._video.setObjectName("video")
         self._capturing = Capture(self._video)
 
         #video frame rate
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.show_frame)
-        self.timer.start(60) #10 fps
+        self.timer.start(50) #20 fps
 
         #choose file button
         self._choose_file_button = QtWidgets.QPushButton(self._central_widget)
@@ -74,24 +77,26 @@ class MainWindow(QMainWindow):
 
         # on/off face swap checkbutton
         self._check_box = QtWidgets.QCheckBox(self._central_widget)
-        self._check_box.setGeometry(QtCore.QRect(460, 440, 150, self.TEXT_BOX_HEIGHT))
+        self._check_box.setGeometry(QtCore.QRect(280, 450, 150, self.TEXT_BOX_HEIGHT))
         self._check_box.setObjectName("_check_box")
 
-
+        #Face icons
         pic_face=QPixmap("./bach.jpg")
         pic_face=pic_face.scaled(110, 110)
 
         self._face_slot = []
         for i in range(0,14):
-            self._face_slot.append(QtWidgets.QLabel(self._central_widget))
+            #self._face_slot.append(QtWidgets.QLabel(self._central_widget))
             if i < 7:
-                self._face_slot[i].setGeometry(QtCore.QRect(50 + i*130, 510, 111, 111))
+                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + i*134, 510, pic_face, i))
+                #self._face_slot[i].setGeometry(QtCore.QRect(65 + i*130, 510, 111, 111))
             else:
-                self._face_slot[i].setGeometry(QtCore.QRect(50 + (i-7)*130, 630, 111, 111))
-            self._face_slot[i].setObjectName("_face_slot_"+str(i))
-            self._face_slot[i].setPixmap(pic_face)
-            self._face_slot[i].mousePressEvent = self.select_method
+                #self._face_slot[i].setGeometry(QtCore.QRect(65 + (i-7)*130, 630, 111, 111))
+                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + (i-7)*134, 630, pic_face, i))
+ 
               
+
+        # rest ~~~~~
         self.setCentralWidget(self._central_widget)
         
         #self._menubar = QtWidgets.QMenuBar(self)
@@ -109,12 +114,29 @@ class MainWindow(QMainWindow):
     def show_frame(self):
         self._capturing.capture()
 
+    def mouseMoveEvent(self, event):
+        print( str(event.x()) )
+        if self._selected_icon != None:
+            self._selected_icon.set_pos(event.x() - self._click_x, event.y() - self._click_y)
+
+    def mouseReleaseEvent(self, event):
+        if self._selected_icon != None:
+            self._selected_icon.reset_pos()
+
+    def delete_selected_icon(self):
+        self._selected_icon = None
+
     def get_file(self):
         self._file_path = QFileDialog.getOpenFileName(self, 'Choose file','c:\\',"Image files (*.jpg *.gif)")
         self._input_box.setText(self._file_path[0])
 
-    def select_method(self, event):
+    def icon_method(self, event, source_object):
         print("lol xd")
+
+    def set_selected_icon(self, selected_icon, x, y):
+        self._click_x = x
+        self._click_y = y
+        self._selected_icon  = selected_icon
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
@@ -124,8 +146,32 @@ class MainWindow(QMainWindow):
         self._start_button.setText(_translate("MainWindow", "Start"))
 
 
+class FaceIcon(QLabel):
+    ICON_SIZE = 111
+    def __init__(self, parent, central_widget, pos_x, pos_y, image, number):
+        QLabel.__init__(self, central_widget)
+        self._parent = parent
+        self.setGeometry(QRect(pos_x, pos_y, self.ICON_SIZE, self.ICON_SIZE))
+        self._original_pos = pos_x, pos_y
+        self.setObjectName("_face_slot_"+str(number))
+        self.setPixmap(image)
+        self.mousePressEvent = self.press_method
+        self.mouseReleaseEvent = self.release_method
 
+    def press_method(self, event):
+        print("pressed" + self.objectName() )
+        self._parent.set_selected_icon(self, event.x(), event.x())
 
+    def release_method(self, event):
+        print("released" + self.objectName())
+        self._parent.delete_selected_icon()
+        self.reset_pos()
+
+    def set_pos(self, x, y):
+        self.setGeometry(x, y, self.ICON_SIZE, self.ICON_SIZE)
+
+    def reset_pos(self):
+        self.set_pos(self._original_pos[0], self._original_pos[1])
 
 class Capture():
     def __init__(self, video_elem):
