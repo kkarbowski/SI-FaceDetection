@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
         #self._statusbar.setObjectName("_statusbar")
         #self.setStatusBar(self._statusbar)
 
-        self.retranslateUi()
+        self.retranslate_ui()
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def show_frame(self):
@@ -150,7 +150,7 @@ class MainWindow(QMainWindow):
     def start_event(self):
         print("start")
 
-    def retranslateUi(self):
+    def retranslate_ui(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "Face Swaping Application"))
         self._choose_file_button.setText(_translate("MainWindow", "Choose input File"))
