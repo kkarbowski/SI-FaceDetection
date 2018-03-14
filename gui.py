@@ -2,7 +2,7 @@ import cv2
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget, QPushButton, QDialog, QFileDialog
-from PyQt5.QtCore import QSize, QPoint, QTimer, QRect
+from PyQt5.QtCore import QSize, QPoint, QTimer, QRect, Qt
 from PyQt5.QtGui import QImage, QPainter, QPixmap
 
 class MainWindow(QMainWindow):
@@ -25,9 +25,9 @@ class MainWindow(QMainWindow):
         self._capturing = Capture(self._video)
 
         #video frame rate
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.show_frame)
-        self.timer.start(50) #20 fps
+        self._timer = QtCore.QTimer()
+        self._timer.timeout.connect(self.show_frame)
+        self._timer.start(50) #20 fps
 
         #choose file button
         self._choose_file_button = QtWidgets.QPushButton(self._central_widget)
@@ -39,6 +39,8 @@ class MainWindow(QMainWindow):
         self._start_button = QtWidgets.QPushButton(self._central_widget)
         self._start_button.setGeometry(QtCore.QRect(240, self.BUTTON_X_POS, 151, 31))
         self._start_button.setObjectName("_push_button_2")
+        self._start_button.clicked.connect(self.start_event)
+
 
         #file input path (text box)
         self._input_box = QtWidgets.QTextEdit(self._central_widget)
@@ -75,10 +77,11 @@ class MainWindow(QMainWindow):
         self._info_label.setObjectName("_info_label")
         self._info_label.setText("Information about face detection:")
 
-        # on/off face swap checkbutton
+        # on/off face swap checkbox
         self._check_box = QtWidgets.QCheckBox(self._central_widget)
         self._check_box.setGeometry(QtCore.QRect(280, 450, 150, self.TEXT_BOX_HEIGHT))
         self._check_box.setObjectName("_check_box")
+        self._check_box.stateChanged.connect(lambda:self.check_box_event(self._check_box))
 
         #Face icons
         pic_face=QPixmap("./bach.jpg")
@@ -114,6 +117,12 @@ class MainWindow(QMainWindow):
     def show_frame(self):
         self._capturing.capture()
 
+    def check_box_event(self, check_box):
+        if check_box.isChecked() == True:
+            print("Face swaping turned off")
+        else:
+            print("Face swaping turned on")
+
     def mouseMoveEvent(self, event):
         print( str(event.x()) )
         if self._selected_icon != None:
@@ -127,7 +136,7 @@ class MainWindow(QMainWindow):
         self._selected_icon = None
 
     def get_file(self):
-        self._file_path = QFileDialog.getOpenFileName(self, 'Choose file','c:\\',"Image files (*.jpg *.gif)")
+        self._file_path = QFileDialog.getOpenFileName(self, 'Choose file','c:\\',"Image files (*.jpg *.gif *.png)")
         self._input_box.setText(self._file_path[0])
 
     def icon_method(self, event, source_object):
@@ -137,6 +146,9 @@ class MainWindow(QMainWindow):
         self._click_x = x
         self._click_y = y
         self._selected_icon  = selected_icon
+
+    def start_event(self):
+        print("start")
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
@@ -159,8 +171,14 @@ class FaceIcon(QLabel):
         self.mouseReleaseEvent = self.release_method
 
     def press_method(self, event):
-        print("pressed" + self.objectName() )
-        self._parent.set_selected_icon(self, event.x(), event.x())
+        if event.button() == Qt.LeftButton:
+            print("pressed" + self.objectName() )
+            self._parent.set_selected_icon(self, event.x(), event.x())
+        else:
+            file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\',"Image files (*.jpg *.gif *.png)")
+            if file_name[0] != "":
+                face_icon = QPixmap(file_name[0])
+                self.setPixmap(face_icon.scaled(110, 110))
 
     def release_method(self, event):
         print("released" + self.objectName())
