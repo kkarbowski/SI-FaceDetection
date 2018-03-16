@@ -1,6 +1,7 @@
 from gui import *
 import sys
 
+
 class Program():
     def __init__(self):
         self._app = QtWidgets.QApplication(sys.argv)
@@ -8,4 +9,4 @@ class Program():
 
     def begin(self):
         self._main_win.show()
-        sys.exit( self._app.exec_() )
+        sys.exit(self._app.exec_())

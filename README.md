@@ -8,3 +8,5 @@ required libraries:
 -skimage
 
 The app will allow to swap faces on movies simply draging and dropping the face you want to swap with.
+
+WC 640x480
