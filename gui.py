@@ -2,7 +2,7 @@ import cv2
 import multiprocessing
 
 from face_detection import *
-
+from video import *
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget, QPushButton, QDialog, QFileDialog
@@ -54,6 +54,7 @@ class MainWindow(QMainWindow):
         self._start_button.setGeometry(QtCore.QRect(240, self.BUTTON_X_POS, 151, 31))
         self._start_button.setObjectName("_push_button_2")
         self._start_button.clicked.connect(self.start_event)
+        self._start_button.setCheckable(True)
 
         # file input path (text box)
         self._input_box = QtWidgets.QTextEdit(self._central_widget)
@@ -146,11 +147,15 @@ class MainWindow(QMainWindow):
         if self._selected_icon is not None:
             self._selected_icon.reset_pos()
 
+    def closeEvent(self, event):
+        self._capturing.kill_process()
+        event.accept()
+
     def delete_selected_icon(self):
         self._selected_icon = None
 
     def get_file(self):
-        self._file_path = QFileDialog.getOpenFileName(self, 'Choose file', 'c:\\', "Image files (*.jpg *.gif *.png)")
+        self._file_path = QFileDialog.getOpenFileName(self, 'Choose file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
         self._input_box.setText(self._file_path[0])
 
     def icon_method(self, event, source_object):
@@ -163,7 +168,16 @@ class MainWindow(QMainWindow):
 
     def start_event(self):
         print("start")
+        if self._input_box.toPlainText() != "":
+            self._capturing.change_video_source(self._input_box.toPlainText())
+        else:
+            self._capturing.set_camera_source()
         self._detection = not self._detection
+        self._start_button.setChecked(self._detection)
+
+    def turn_off_detection(self):
+        self._detection = False
+        self._start_button.setChecked(self._detection)
 
     def is_detetcion(self):
         return self._detection
@@ -194,7 +208,7 @@ class FaceIcon(QLabel):
             print("pressed" + self.objectName())
             self._parent.set_selected_icon(self, event.x(), event.x())
         else:
-            file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png)")
+            file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
             if file_name[0] != "":
                 face_icon = QPixmap(file_name[0])
                 self.setPixmap(face_icon.scaled(self.ICON_SIZE, self.ICON_SIZE))
@@ -210,44 +224,3 @@ class FaceIcon(QLabel):
     def reset_pos(self):
         self.set_pos(self._original_pos[0], self._original_pos[1])
 
-
-class Capture():
-    def __init__(self, video_elem, gui):
-        self._video_elem = video_elem
-        self._capturing = False
-        self._gui = gui
-        self._c = cv2.VideoCapture(0)
-        self._detector = FaceDetector(DetectionMethods.HAAR)
-        self._process = None
-        self._queue = multiprocessing.Queue()
-        self._img_queue = multiprocessing.Queue()
-
-    def capture(self):
-        if self._gui.is_detetcion() == True:
-            cvRGBImg = cv2.resize(cv2.cvtColor(self._c.read()[1], cv2.COLOR_BGR2RGB),
-                                  (MainWindow.VIDEO_WIDTH, MainWindow.VIDEO_HEIGHT))
-            if not self._queue.empty():
-                positions, time = self._queue.get()
-                if positions:
-                    informations = str(positions[0].x) + " " + str(positions[0].y) + "\n"
-                else:
-                    informations = "No faces\n"
-                informations += " %+2.2f" % (time)
-                self._gui.send_infos(informations)
-
-                self._img_queue.put(cvRGBImg)
-            elif self._process is None:
-                print("NONE")
-                self._img_queue.put(cvRGBImg)
-                self._process = multiprocessing.Process(target=self._detector.detect, args=(self._queue, self._img_queue))
-                self._process.start()
-
-            qimg = QtGui.QImage(cvRGBImg.data, cvRGBImg.shape[1], cvRGBImg.shape[0], QtGui.QImage.Format_RGB888)
-            qpm = QtGui.QPixmap.fromImage(qimg)
-            self._video_elem.setPixmap(qpm)
-        elif self._process is not None:
-            self._process.terminate()
-            self._process = None
-
-    def change_method(self, method):
-        self._img_queue.put(method)

@@ -4,7 +4,6 @@ import time
 import dlib
 
 from enum import Enum
-
 from skimage import io
 
 
@@ -26,6 +25,8 @@ class DetectionMethods(Enum):
 class FaceDetector:
     LBP_CASCADE = cv2.CascadeClassifier('cascades/lbpcascade_frontalface.xml')
     HAAR_CASCADE = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
+    DLIB_SCALE = 580/240
+    CNN_SCALE = 580/320
 
     def __init__(self, method):
         if isinstance(method, DetectionMethods):
@@ -88,7 +89,8 @@ class FaceDetector:
         # Loop through each face we found in the image
         for i, face_rect in enumerate(detected_faces):
             positions_of_faces.append(
-                FaceArea(face_rect.left(), face_rect.top(), face_rect.width(), face_rect.height()))
+                FaceArea(face_rect.left() * self.DLIB_SCALE, face_rect.top() * self.DLIB_SCALE,
+                         face_rect.width() * self.DLIB_SCALE, face_rect.height() * self.DLIB_SCALE))
 
         t2 = time.time()
         return positions_of_faces, t2 - t1
@@ -107,8 +109,9 @@ class FaceDetector:
         positions_of_faces = []
 
         for i, face_rect in enumerate(dets):
-            positions_of_faces.append(FaceArea(face_rect.rect.left(), face_rect.rect.top(),
-                                               face_rect.rect.width(), face_rect.rect.height()))
+            positions_of_faces.append(
+                FaceArea(face_rect.rect.left() * self.CNN_SCALE, face_rect.rect.top() * self.CNN_SCALE,
+                         face_rect.rect.width() * self.CNN_SCALE, face_rect.rect.height() * self.CNN_SCALE))
 
         t2 = time.time()
         return positions_of_faces, t2 - t1
