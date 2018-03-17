@@ -54,3 +54,23 @@ def detect_faces_dlib(file_name):
 
     t2 = time.time()
     return positions_of_faces, t2-t1
+
+
+#CNN detector
+def detect_faces_cnn(file_name):
+    t1 = time.time()
+    cnn_face_detector = dlib.cnn_face_detection_model_v1("cascades/mmod_human_face_detector.dat")
+    img = io.imread(file_name)
+
+    dets = cnn_face_detector(img, 0)
+
+    positions_of_faces = []
+
+    for i, face_rect in enumerate(dets):
+        positions_of_faces.append(FaceArea(face_rect.rect.left(), face_rect.rect.top(),
+                                           face_rect.rect.width(), face_rect.rect.height()))
+
+    t2 = time.time()
+    return positions_of_faces, t2 - t1
+
+
