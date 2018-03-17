@@ -1,5 +1,8 @@
 import cv2
+import multiprocessing
+
 from face_detection import *
+
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget, QPushButton, QDialog, QFileDialog
@@ -11,6 +14,10 @@ class MainWindow(QMainWindow):
     BUTTON_X_POS = 30
     TEXT_BOX_HEIGHT = 24
     VIDEO_REFRESH_RATE = 60
+    VIDEO_WIDTH = 580
+    VIDEO_HEIGHT = 435
+    VIDEO_BOX_X = 420
+    VIDEO_BOX_Y = 25
 
     def __init__(self):
         QMainWindow.__init__(self)
@@ -21,17 +28,20 @@ class MainWindow(QMainWindow):
         self._selected_icon = None
         self._click_x = 0
         self._click_y = 0
+        self._file_path = ""
+        self._detection = False
+        self._current_method = DetectionMethods.HAAR
 
         # video widget
         self._video = QtWidgets.QLabel(self._central_widget)
-        self._video.setGeometry(QtCore.QRect(420, 25, 580, 435))
+        self._video.setGeometry(QtCore.QRect(self.VIDEO_BOX_X, self.VIDEO_BOX_Y, self.VIDEO_WIDTH, self.VIDEO_HEIGHT))
         self._video.setObjectName("video")
-        self._capturing = Capture(self._video)
+        self._capturing = Capture(self._video, self)
 
         # video frame rate
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.show_frame)
-        self._timer.start(1000 / self.VIDEO_REFRESH_RATE)  # 20 fps
+        self._timer.start(1000 / self.VIDEO_REFRESH_RATE)
 
         # choose file button
         self._choose_file_button = QtWidgets.QPushButton(self._central_widget)
@@ -66,7 +76,8 @@ class MainWindow(QMainWindow):
         self._method_box = QtWidgets.QComboBox(self._central_widget)
         self._method_box.setGeometry(QtCore.QRect(20, 160, 381, self.TEXT_BOX_HEIGHT))
         self._method_box.setObjectName("_font_combo_box")
-        self._method_box.addItems(["1 met", "2 met", "3 met", "4 met"])
+        self._method_box.addItems(["Haar cascade", "Lbp cascade", "HOG method(dlib)", "CNN method(dlib)"])
+        self._method_box.currentIndexChanged.connect(self.methods_change)
 
         # infos about FR
         self._text_browser = QtWidgets.QTextBrowser(self._central_widget)
@@ -87,50 +98,52 @@ class MainWindow(QMainWindow):
         self._check_box.stateChanged.connect(lambda: self.check_box_event(self._check_box))
 
         # Face icons
-        pic_face = QPixmap("./bach.jpg")
-        pic_face = pic_face.scaled(110, 110)
+        pic_face = QPixmap("./bach.jpg") # default icon
+        pic_face = pic_face.scaled(FaceIcon.ICON_SIZE, FaceIcon.ICON_SIZE)
 
         self._face_slot = []
         for i in range(0, 14):
-            # self._face_slot.append(QtWidgets.QLabel(self._central_widget))
             if i < 7:
                 self._face_slot.append(FaceIcon(self, self._central_widget, 53 + i * 134, 510, pic_face, i))
-                # self._face_slot[i].setGeometry(QtCore.QRect(65 + i*130, 510, 111, 111))
             else:
-                # self._face_slot[i].setGeometry(QtCore.QRect(65 + (i-7)*130, 630, 111, 111))
                 self._face_slot.append(FaceIcon(self, self._central_widget, 53 + (i - 7) * 134, 630, pic_face, i))
 
         # rest ~~~~~
         self.setCentralWidget(self._central_widget)
-
-        # self._menubar = QtWidgets.QMenuBar(self)
-        # self._menubar.setGeometry(QtCore.QRect(0, 0, 1038, 21))
-        # self._menubar.setObjectName("_menubar")
-        # self.setMenuBar(self._menubar)
-
-        # self._statusbar = QtWidgets.QStatusBar(self)
-        # self._statusbar.setObjectName("_statusbar")
-        # self.setStatusBar(self._statusbar)
-
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
+
+    def send_infos(self, infos):
+        self._text_browser.setText(self._method_box.currentText() + ":\n" + infos)
+
+    def methods_change(self):
+        self._method_name = self._method_box.currentText()
+        if self._method_name == "Haar cascade":
+            self._current_method = DetectionMethods.HAAR
+        elif self._method_name == "Lbp cascade":
+            self._current_method = DetectionMethods.LBP
+        elif self._method_name == "HOG method(dlib)":
+            self._current_method = DetectionMethods.DLIB
+        else:
+            self._current_method = DetectionMethods.CNN
+        self._capturing.change_method(self._current_method)
 
     def show_frame(self):
         self._capturing.capture()
 
     def check_box_event(self, check_box):
-        if check_box.isChecked() == True:
+        if check_box.isChecked():
             print("Face swaping turned off")
         else:
             print("Face swaping turned on")
 
     def mouseMoveEvent(self, event):
         print(str(event.x()))
-        if self._selected_icon != None:
+        if self._selected_icon is not None:
             self._selected_icon.set_pos(event.x() - self._click_x, event.y() - self._click_y)
 
     def mouseReleaseEvent(self, event):
-        if self._selected_icon != None:
+        if self._selected_icon is not None:
             self._selected_icon.reset_pos()
 
     def delete_selected_icon(self):
@@ -141,7 +154,7 @@ class MainWindow(QMainWindow):
         self._input_box.setText(self._file_path[0])
 
     def icon_method(self, event, source_object):
-        print("lol xd")
+        print("icon method")
 
     def set_selected_icon(self, selected_icon, x, y):
         self._click_x = x
@@ -150,17 +163,21 @@ class MainWindow(QMainWindow):
 
     def start_event(self):
         print("start")
+        self._detection = not self._detection
+
+    def is_detetcion(self):
+        return self._detection
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "Face Swaping Application"))
         self._choose_file_button.setText(_translate("MainWindow", "Choose input File"))
         self._check_box.setText(_translate("MainWindow", "Turn off face swaping"))
-        self._start_button.setText(_translate("MainWindow", "Start"))
+        self._start_button.setText(_translate("MainWindow", "Start/Stop"))
 
 
 class FaceIcon(QLabel):
-    ICON_SIZE = 111
+    ICON_SIZE = 110
 
     def __init__(self, parent, central_widget, pos_x, pos_y, image, number):
         QLabel.__init__(self, central_widget)
@@ -180,7 +197,7 @@ class FaceIcon(QLabel):
             file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png)")
             if file_name[0] != "":
                 face_icon = QPixmap(file_name[0])
-                self.setPixmap(face_icon.scaled(110, 110))
+                self.setPixmap(face_icon.scaled(self.ICON_SIZE, self.ICON_SIZE))
 
     def release_method(self, event):
         print("released" + self.objectName())
@@ -195,108 +212,42 @@ class FaceIcon(QLabel):
 
 
 class Capture():
-    def __init__(self, video_elem):
+    def __init__(self, video_elem, gui):
         self._video_elem = video_elem
         self._capturing = False
+        self._gui = gui
         self._c = cv2.VideoCapture(0)
-        self._fps_counter = 0
+        self._detector = FaceDetector(DetectionMethods.HAAR)
+        self._process = None
+        self._queue = multiprocessing.Queue()
+        self._img_queue = multiprocessing.Queue()
 
     def capture(self):
-        cvRGBImg = cv2.cvtColor(self._c.read()[1], cv2.COLOR_BGR2RGB)
+        if self._gui.is_detetcion() == True:
+            cvRGBImg = cv2.resize(cv2.cvtColor(self._c.read()[1], cv2.COLOR_BGR2RGB),
+                                  (MainWindow.VIDEO_WIDTH, MainWindow.VIDEO_HEIGHT))
+            if not self._queue.empty():
+                positions, time = self._queue.get()
+                if positions:
+                    informations = str(positions[0].x) + " " + str(positions[0].y) + "\n"
+                else:
+                    informations = "No faces\n"
+                informations += " %+2.2f" % (time)
+                self._gui.send_infos(informations)
 
-        # width, height = cvRGBImg.shape[:2]
-        #print(width, "  ", height, "\n")
+                self._img_queue.put(cvRGBImg)
+            elif self._process is None:
+                print("NONE")
+                self._img_queue.put(cvRGBImg)
+                self._process = multiprocessing.Process(target=self._detector.detect, args=(self._queue, self._img_queue))
+                self._process.start()
 
-        if (self._fps_counter % 20 == 0):
-            positions, time = detect_faces_dlib(cvRGBImg)
-            if positions:
-                print(str(positions[0].x) + " " + str(positions[0].y) + "\n")
-            else:
-                print("No faces\n")
-            print(" %+2.2f" % (time))
-            print("\n")
-        self._fps_counter += 1
-        qimg = QtGui.QImage(cvRGBImg.data, cvRGBImg.shape[1], cvRGBImg.shape[0], QtGui.QImage.Format_RGB888)
-        qpm = QtGui.QPixmap.fromImage(qimg)
-        self._video_elem.setPixmap(qpm)
+            qimg = QtGui.QImage(cvRGBImg.data, cvRGBImg.shape[1], cvRGBImg.shape[0], QtGui.QImage.Format_RGB888)
+            qpm = QtGui.QPixmap.fromImage(qimg)
+            self._video_elem.setPixmap(qpm)
+        elif self._process is not None:
+            self._process.terminate()
+            self._process = None
 
-        # class MyDialog(QtWidgets.QDialog):
-#    def __init__(self, parent=None):
-#        super(MyDialog, self).__init__(parent)
-
-#        self.cvImage = cv2.imread(r'cat.jpg')
-#        height, width, byteValue = self.cvImage.shape
-#        byteValue = byteValue * width
-
-#        cv2.cvtColor(self.cvImage, cv2.COLOR_BGR2RGB, self.cvImage)
-
-#        self.mQImage = QImage(self.cvImage, width, height, byteValue, QImage.Format_RGB888)
-
-#    def paintEvent(self, QPaintEvent):
-#        painter = QPainter()
-#        painter.begin(self)
-#        painter.drawImage(0, 0, self.mQImage)
-#        painter.end()
-
-#    def keyPressEvent(self, QKeyEvent):
-#        super(MyDialog, self).keyPressEvent(QKeyEvent)
-#        if 's' == QKeyEvent.text():
-#            cv2.imwrite("cat2.png", self.cvImage)
-#        else:
-#            app.exit(1)
-
-
-#    class Capture():
-# def __init__(self, video_elem):
-#    self._video_elem = video_elem
-#    self._capturing = False
-#    self._c = cv2.VideoCapture(0)
-
-# def start_capture(self):
-#    print("pressed start")
-#    self._capturing = True
-#    while(self._capturing):
-#        cv2.imshow("Capture", self._c.read()[1])
-#        cvRGBImg = cv2.cvtColor(cvBGRImg, cv2.cv.CV_BGR2RGB)
-#        qimg = QtGui.QImage(cvRGBImg.data,cvRGBImg.shape[1], cvRGBImg.shape[0], QtGui.QImage.Format_RGB888)
-#        qpm = QtGui.QPixmap.fromImage(qimg)
-#        imageLabel.setPixmap(qpm)
-#        setPixmap(pixmap)
-#        cv2.waitKey(5)
-#    cv2.destroyAllWindows()
-
-# def end_capture(self):
-#    print("pressed End")
-#    self._capturing = False
-
-# def quit_capture(self):
-#    print("pressed Quit")
-#    self._capturing = False
-#    cv2.destroyAllWindows()
-#    self._c.release()
-#    QtCore.QCoreApplication.quit()
-
-# class Window(QtWidgets.QWidget):
-#    def __init__(self):
-
-#        QtWidgets.QWidget.__init__(self)
-#        self.setWindowTitle('Control Panel')
-
-#        self._capture = Capture()
-#        self._start_button = QtWidgets.QPushButton('Start',self)
-#        self._start_button.clicked.connect(self._capture.start_capture)
-
-#        self._end_button = QtWidgets.QPushButton('End',self)
-#        self._end_button.clicked.connect(self._capture.end_capture)
-
-#        self._quit_button = QtWidgets.QPushButton('Quit',self)
-#        self._quit_button.clicked.connect(self._capture.quit_capture)
-
-#        vbox = QtWidgets.QVBoxLayout(self)
-#        vbox.addWidget(self._start_button)
-#        vbox.addWidget(self._end_button)
-#        vbox.addWidget(self._quit_button)
-
-#        self.setLayout(vbox)
-#        self.setGeometry(100,100,200,200)
-#        self.show()
+    def change_method(self, method):
+        self._img_queue.put(method)
