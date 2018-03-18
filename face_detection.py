@@ -54,8 +54,6 @@ class FaceDetector:
                     elif self._method == DetectionMethods.CNN:
                         que.put(self._detect_faces_cnn(image))
 
-
-
     def _detect_faces(self, f_cascade, colored_img, scale_factor=1.2):
         t1 = time.time()
         img_copy = np.copy(colored_img)

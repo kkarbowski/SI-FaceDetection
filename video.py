@@ -1,13 +1,12 @@
 import cv2
 import multiprocessing
-
 from face_detection import *
 from gui import *
 
 from PyQt5 import QtGui
 
 
-class Capture():
+class Capture:
     def __init__(self, video_elem, gui):
         self._video_elem = video_elem
         self._capturing = False
@@ -25,9 +24,9 @@ class Capture():
     def capture(self):
         if self._gui.is_detetcion():
             ret, frame = self._video.read()
-            if ret == True:
+            if ret:
                 self._cv_img = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
-                                      (self._gui.VIDEO_WIDTH, self._gui.VIDEO_HEIGHT))
+                                          (self._gui.VIDEO_WIDTH, self._gui.VIDEO_HEIGHT))
 
                 if not self._queue.empty():
                     self._positions, time = self._queue.get()
@@ -35,14 +34,15 @@ class Capture():
                         informations = str(self._positions[0].x) + " " + str(self._positions[0].y) + "\n"
                     else:
                         informations = "No faces\n"
-                    informations += " %+2.2f" % (time)
+                    informations += " %+2.2f" % time
                     self._gui.send_infos(informations)
 
                     self._img_queue.put(self._cv_img)
                 elif self._process is None:
                     print("NONE")
                     self._img_queue.put(self._cv_img)
-                    self._process = multiprocessing.Process(target=self._detector.detect, args=(self._queue, self._img_queue))
+                    self._process = multiprocessing.Process(target=self._detector.detect,
+                                                            args=(self._queue, self._img_queue))
                     self._process.start()
                 self.show_frame()
             else:

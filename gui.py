@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
         self._check_box.stateChanged.connect(lambda: self.check_box_event(self._check_box))
 
         # Face icons
-        pic_face = QPixmap("./bach.jpg") # default icon
+        pic_face = QPixmap("./bach.jpg")  # default icon
         pic_face = pic_face.scaled(FaceIcon.ICON_SIZE, FaceIcon.ICON_SIZE)
 
         self._face_slot = []
@@ -155,7 +155,8 @@ class MainWindow(QMainWindow):
         self._selected_icon = None
 
     def get_file(self):
-        self._file_path = QFileDialog.getOpenFileName(self, 'Choose file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
+        self._file_path = QFileDialog.getOpenFileName(self, 'Choose file', 'c:\\',
+                                                      "Image files (*.jpg *.gif *.png *.mp4)")
         self._input_box.setText(self._file_path[0])
 
     def icon_method(self, event, source_object):
