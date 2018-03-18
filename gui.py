@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
             print("Face swapping turned on")
 
     def mouseMoveEvent(self, event):
-        print(str(event.x()))
+        #print(str(event.x()))
         if self._selected_icon is not None:
             self._selected_icon.set_pos(event.x() - self._click_x, event.y() - self._click_y)
 
@@ -207,8 +207,12 @@ class FaceIcon(QLabel):
         self.mousePressEvent = self.press_method
         self.mouseReleaseEvent = self.release_method
         self.file_name = file_name
-        img = cv2.imread(file_name)
-        face_region, _ = parent.face_detector._detect_faces(face_detection.FaceDetector.HAAR_CASCADE, img)
+        self.face_region = None
+        self.detect_face_on_icon()
+
+    def detect_face_on_icon(self):
+        img = cv2.imread(self.file_name)
+        face_region, _ = self._parent.face_detector._detect_faces(face_detection.FaceDetector.HAAR_CASCADE, img)
         if face_region is not None:
             self.face_region = face_region[0]
         else:
@@ -221,6 +225,8 @@ class FaceIcon(QLabel):
         else:
             file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
             if file_name[0] != "":
+                self.file_name = file_name[0]
+                self.detect_face_on_icon()
                 face_icon = QPixmap(file_name[0])
                 self.setPixmap(face_icon.scaled(self.ICON_SIZE, self.ICON_SIZE))
 
