@@ -3,7 +3,7 @@ import multiprocessing
 
 from face_detection import *
 from video import *
-
+import face_detection
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget, QPushButton, QDialog, QFileDialog
 from PyQt5.QtCore import QSize, QPoint, QTimer, QRect, Qt
@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
         self._text_browser = QtWidgets.QTextBrowser(self._central_widget)
         self._text_browser.setGeometry(QtCore.QRect(20, 220, 381, 221))
         self._text_browser.setObjectName("_text_browser")
-        self._text_browser.setText("Adsasdasd ads asd asd asd as das das d")
+        self._text_browser.setText("Information about face detection")
 
         # label infos about process of FD
         self._info_label = QtWidgets.QLabel(self._central_widget)
@@ -180,7 +180,7 @@ class MainWindow(QMainWindow):
         self._detection = False
         self._start_button.setChecked(self._detection)
 
-    def is_detetcion(self):
+    def is_detection(self):
         return self._detection
 
     def retranslateUi(self):

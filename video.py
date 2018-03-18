@@ -22,7 +22,7 @@ class Capture:
         self._cv_img = None
 
     def capture(self):
-        if self._gui.is_detetcion():
+        if self._gui.is_detection():
             ret, frame = self._video.read()
             if ret:
                 self._cv_img = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB),
