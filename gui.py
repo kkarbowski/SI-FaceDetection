@@ -20,6 +20,8 @@ class MainWindow(QMainWindow):
     VIDEO_BOX_Y = 25
 
     def __init__(self):
+        self.face_detector = face_detection.FaceDetector(face_detection.DetectionMethods.HAAR)
+
         QMainWindow.__init__(self)
         self.setObjectName("Face Swaping Application")
         self.resize(1024, 768)
@@ -105,9 +107,10 @@ class MainWindow(QMainWindow):
         self._face_slot = []
         for i in range(0, 14):
             if i < 7:
-                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + i * 134, 510, pic_face, i))
+                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + i * 134, 510, pic_face, i, "bach.jpg"))
             else:
-                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + (i - 7) * 134, 630, pic_face, i))
+                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + (i - 7) * 134, 630, pic_face, i,
+                                                "bach.jpg"))
 
         # rest ~~~~~
         self.setCentralWidget(self._central_widget)
@@ -134,9 +137,9 @@ class MainWindow(QMainWindow):
 
     def check_box_event(self, check_box):
         if check_box.isChecked():
-            print("Face swaping turned off")
+            print("Face swapping turned off")
         else:
-            print("Face swaping turned on")
+            print("Face swapping turned on")
 
     def mouseMoveEvent(self, event):
         print(str(event.x()))
@@ -185,16 +188,16 @@ class MainWindow(QMainWindow):
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("MainWindow", "Face Swaping Application"))
+        self.setWindowTitle(_translate("MainWindow", "Face Swapping Application"))
         self._choose_file_button.setText(_translate("MainWindow", "Choose input File"))
-        self._check_box.setText(_translate("MainWindow", "Turn off face swaping"))
+        self._check_box.setText(_translate("MainWindow", "Turn off face swapping"))
         self._start_button.setText(_translate("MainWindow", "Start/Stop"))
 
 
 class FaceIcon(QLabel):
     ICON_SIZE = 110
 
-    def __init__(self, parent, central_widget, pos_x, pos_y, image, number):
+    def __init__(self, parent, central_widget, pos_x, pos_y, image, number, file_name):
         QLabel.__init__(self, central_widget)
         self._parent = parent
         self.setGeometry(QRect(pos_x, pos_y, self.ICON_SIZE, self.ICON_SIZE))
@@ -203,6 +206,13 @@ class FaceIcon(QLabel):
         self.setPixmap(image)
         self.mousePressEvent = self.press_method
         self.mouseReleaseEvent = self.release_method
+        self.file_name = file_name
+        img = cv2.imread(file_name)
+        face_region, _ = parent.face_detector._detect_faces(face_detection.FaceDetector.HAAR_CASCADE, img)
+        if face_region is not None:
+            self.face_region = face_region[0]
+        else:
+            self.face_region = None
 
     def press_method(self, event):
         if event.button() == Qt.LeftButton:

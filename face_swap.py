@@ -78,3 +78,5 @@ def swap_faces(destination_img, destination_face_area, source_img, source_face_a
     swapped_img[destination_face_area.y:destination_face_area.y + destination_face_area.h,
                 destination_face_area.x:destination_face_area.x + destination_face_area.w] = face
     return swapped_img
+
+
