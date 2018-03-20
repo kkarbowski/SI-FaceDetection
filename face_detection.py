@@ -4,6 +4,7 @@ import time
 import dlib
 
 from enum import Enum
+from multiprocessing import Queue
 from skimage import io
 
 
@@ -40,8 +41,8 @@ class FaceDetector:
 
     def detect(self, que, img_que):
         while(True):
-            if not img_que.empty():
-                image = img_que.get()
+            try:
+                image = img_que.get(10)
                 if isinstance(image, DetectionMethods):
                     self._method = image
                 else:
@@ -53,6 +54,8 @@ class FaceDetector:
                         que.put(self._detect_faces_dlib(image))
                     elif self._method == DetectionMethods.CNN:
                         que.put(self._detect_faces_cnn(image))
+            except Queue.Empty:
+                continue
 
     def _detect_faces(self, f_cascade, colored_img, scale_factor=1.2):
         t1 = time.time()
