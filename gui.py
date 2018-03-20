@@ -30,6 +30,8 @@ class MainWindow(QMainWindow):
         self._selected_icon = None
         self._click_x = 0
         self._click_y = 0
+        self.mouse_x = 0
+        self.mouse_y = 0
         self._file_path = ""
         self._detection = False
         self._current_method = DetectionMethods.HAAR
@@ -117,8 +119,8 @@ class MainWindow(QMainWindow):
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def send_infos(self, infos):
-        self._text_browser.setText(self._method_box.currentText() + ":\n" + infos)
+    def send_info(self, info):
+        self._text_browser.setText(self._method_box.currentText() + ":\n" + info)
 
     def methods_change(self):
         self._method_name = self._method_box.currentText()
@@ -142,13 +144,22 @@ class MainWindow(QMainWindow):
             print("Face swapping turned on")
 
     def mouseMoveEvent(self, event):
-        #print(str(event.x()))
+        self.mouse_x = event.x()
+        self.mouse_y = event.y()
         if self._selected_icon is not None:
             self._selected_icon.set_pos(event.x() - self._click_x, event.y() - self._click_y)
 
     def mouseReleaseEvent(self, event):
         if self._selected_icon is not None:
             self._selected_icon.reset_pos()
+
+    def icon_release_event(self):
+        if self._selected_icon is not None:
+            if self._selected_icon._face_region is not None:
+                source_img = cv2.imread(self._selected_icon._file_name)
+                self._capturing.set_tracker(source_img, self._selected_icon._face_region,
+                                            self.mouse_x - self.VIDEO_BOX_X, self.mouse_y - self.VIDEO_BOX_Y)
+                self._selected_icon.reset_pos()
 
     def closeEvent(self, event):
         self._capturing.kill_process()
@@ -206,32 +217,33 @@ class FaceIcon(QLabel):
         self.setPixmap(image)
         self.mousePressEvent = self.press_method
         self.mouseReleaseEvent = self.release_method
-        self.file_name = file_name
-        self.face_region = None
+        self._file_name = file_name
+        self._face_region = None
         self.detect_face_on_icon()
 
     def detect_face_on_icon(self):
-        img = cv2.imread(self.file_name)
+        img = cv2.imread(self._file_name)
         face_region, _ = self._parent.face_detector._detect_faces(face_detection.FaceDetector.HAAR_CASCADE, img)
         if face_region is not None:
-            self.face_region = face_region[0]
+            self._face_region = face_region[0]
         else:
-            self.face_region = None
+            self._face_region = None
 
     def press_method(self, event):
         if event.button() == Qt.LeftButton:
-            print("pressed" + self.objectName())
+            # print("pressed" + self.objectName())
             self._parent.set_selected_icon(self, event.x(), event.x())
         else:
             file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
             if file_name[0] != "":
-                self.file_name = file_name[0]
+                self._file_name = file_name[0]
                 self.detect_face_on_icon()
                 face_icon = QPixmap(file_name[0])
                 self.setPixmap(face_icon.scaled(self.ICON_SIZE, self.ICON_SIZE))
 
     def release_method(self, event):
-        print("released" + self.objectName())
+        # print("released" + self.objectName())
+        self._parent.icon_release_event()
         self._parent.delete_selected_icon()
         self.reset_pos()
 
