@@ -26,7 +26,6 @@ class Capture:
         self._swapping_point_x = 0
         self._swapping_point_y = 0
         self._try_swapping = False
-        self._face_position = None
 
     def capture(self):
         if self._gui.is_detection():
@@ -37,28 +36,12 @@ class Capture:
 
                 if not self._queue.empty():
                     self._positions, time = self._queue.get()
-
                     if self._positions:
-                        # If we put the icon somewhere in the film
+                        # If we put the icon somewhere in the film - we check whether this location is a face
+                        # and if so set the tracker
                         if self._try_swapping:
-                            # this variable indicates if we hit a face with the icon
-                            is_point_a_face = False
-                            for position in self._positions:
-                                if (position.x <= self._swapping_point_x <= position.x + position.w
-                                        and position.y <= self._swapping_point_y <= position.y + position.h):
-                                    is_point_a_face = True
-                                    self._face_position = position
-                                    break
-                            # If we have hit the face with the icon we initialize the tracker
-                            if is_point_a_face:
-                                self._tracker.init_tracker(self._cv_img, self._face_position,
-                                                           self._source_img,
-                                                           self._source_face_area)
+                            self.icon_drag_handler()
 
-                            else:
-                                print("Nie znaleziono twarzy we wskazanym miejcu")
-
-                        self._face_position = self._positions[0]
                         information = str(self._positions[0].x) + " " + str(self._positions[0].y) + "\n"
                     else:
                         information = "No faces\n"
@@ -67,14 +50,14 @@ class Capture:
                     self._img_queue.put(self._cv_img)
 
                 elif self._process is None:
-                    print("NONE")
                     self._img_queue.put(self._cv_img)
                     self._process = multiprocessing.Process(target=self._detector.detect,
                                                             args=(self._queue, self._img_queue))
                     self._process.start()
 
+                # If we track a face swap the faces
                 if self._tracker.is_tracking:
-                    self._cv_img = self._tracker.track_and_swap_faces(self._cv_img, self._face_position)
+                    self._cv_img = self._tracker.track_and_swap_faces(self._cv_img)
 
                 self.show_frame()
                 self._try_swapping = False
@@ -110,3 +93,21 @@ class Capture:
         self._swapping_point_y = point_y
         self._try_swapping = True
 
+    def icon_drag_handler(self):
+        # this variable indicates if we hit a face with the icon
+        is_point_a_face = False
+        face_position = None
+        for position in self._positions:
+            if (position.x <= self._swapping_point_x <= position.x + position.w
+                    and position.y <= self._swapping_point_y <= position.y + position.h):
+                is_point_a_face = True
+                face_position = position
+                break
+        # If we have hit the face with the icon we initialize the tracker
+        if is_point_a_face:
+            self._tracker.init_tracker(self._cv_img, face_position,
+                                       self._source_img,
+                                       self._source_face_area)
+
+        else:
+            print("Cannot find a face is this location")

@@ -90,7 +90,7 @@ class TrackerOpenCV:
         self._tracker.init(destination_img, bbox)
         self.is_tracking = True
 
-    def track_and_swap_faces(self, destination_img, destination_face_area):
+    def track_and_swap_faces(self, destination_img):
         # Read a new frame
         frame = destination_img.copy()
 
