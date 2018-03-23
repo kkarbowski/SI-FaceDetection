@@ -60,12 +60,15 @@ class Tracker:
 
 class TrackerOpenCV:
     def __init__(self):
-        tracker_types = ['BOOSTING', 'MIL', 'KCF', 'TLD', 'MEDIANFLOW', 'GOTURN']
-        tracker_type = tracker_types[2]
         self._source_img = None
         self._source_face_area = None
         self._tracker = None
         self.is_tracking = False
+        self.create_tracker()
+
+    def create_tracker(self):
+        tracker_types = ['BOOSTING', 'MIL', 'KCF', 'TLD', 'MEDIANFLOW', 'GOTURN']
+        tracker_type = tracker_types[2]
         if tracker_type == 'BOOSTING':
             self._tracker = cv2.TrackerBoosting_create()
         if tracker_type == 'MIL':
@@ -80,6 +83,8 @@ class TrackerOpenCV:
             self._tracker = cv2.TrackerGOTURN_create()
 
     def init_tracker(self, destination_img, destination_face_area, source_img, source_face_area):
+        self._tracker.clear()
+        self.create_tracker()
         self._source_img = source_img
         self._source_face_area = source_face_area
         # Define an initial bounding box

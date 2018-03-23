@@ -23,6 +23,7 @@ class Capture:
         self._tracker = fs.TrackerOpenCV()
         self._source_img = None
         self._source_face_area = None
+        # Points where you drop an Icon
         self._swapping_point_x = 0
         self._swapping_point_y = 0
         self._try_swapping = False
