@@ -20,13 +20,14 @@ class Capture:
         self._time = 0
         self._video = self._c
         self._cv_img = None
-        self._tracker = fs.TrackerOpenCV()
         self._source_img = None
         self._source_face_area = None
         # Points where you drop an Icon
         self._swapping_point_x = 0
         self._swapping_point_y = 0
         self._try_swapping = False
+        # List of all active trackers
+        self._trackers = []
 
     def capture(self):
         if self._gui.is_detection():
@@ -56,9 +57,9 @@ class Capture:
                                                             args=(self._queue, self._img_queue))
                     self._process.start()
 
-                # If we track a face swap the faces
-                if self._tracker.is_tracking:
-                    self._cv_img = self._tracker.track_and_swap_faces(self._cv_img)
+                for tracker in self._trackers:
+                    if tracker.is_tracking:
+                        self._cv_img = tracker.track_and_swap_faces(self._cv_img)
 
                 self.show_frame()
                 self._try_swapping = False
@@ -106,9 +107,12 @@ class Capture:
                 break
         # If we have hit the face with the icon we initialize the tracker
         if is_point_a_face:
-            self._tracker.init_tracker(self._cv_img, face_position,
-                                       self._source_img,
-                                       self._source_face_area)
+            tracker = fs.TrackerOpenCV()
+            tracker.init_tracker(self._cv_img, face_position,
+                                 self._source_img,
+                                 self._source_face_area)
+            self._trackers.append(tracker)
+            print("Tracker initialized")
 
         else:
             print("Cannot find a face is this location")
