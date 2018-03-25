@@ -28,6 +28,7 @@ class Capture:
         self._try_swapping = False
         # List of all active trackers
         self._trackers = []
+        self._face_swap_on = True
 
     def capture(self):
         if self._gui.is_detection():
@@ -57,9 +58,11 @@ class Capture:
                                                             args=(self._queue, self._img_queue))
                     self._process.start()
 
-                for tracker in self._trackers:
-                    if tracker.is_tracking:
-                        self._cv_img = tracker.track_and_swap_faces(self._cv_img)
+                # If face swap is turned on
+                if self._face_swap_on:
+                    for tracker in self._trackers:
+                        if tracker.is_tracking:
+                            self._cv_img = tracker.track_and_swap_faces(self._cv_img)
 
                 self.show_frame()
                 self._try_swapping = False
@@ -107,6 +110,7 @@ class Capture:
                 break
         # If we have hit the face with the icon we initialize the tracker
         if is_point_a_face:
+            # Swap those comments to use OpenCV tracker
             #tracker = fs.TrackerOpenCV()
             tracker = fs.Tracker()
             tracker.init_tracker(self._cv_img, face_position,

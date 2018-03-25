@@ -26,10 +26,10 @@ class Tracker:
         self._source_face_area = source_face_area
         # Define an initial bounding box
         self._tracker.start_track(destination_img,
-                                  dlib.rectangle(int(destination_face_area.x) - 10,
-                                                 int(destination_face_area.y) - 20,
-                                                 int(destination_face_area.x) + int(destination_face_area.w) + 10,
-                                                 int(destination_face_area.y) + int(destination_face_area.h) + 20))
+                                  dlib.rectangle(int(destination_face_area.x),
+                                                 int(destination_face_area.y),
+                                                 int(destination_face_area.x) + int(destination_face_area.w),
+                                                 int(destination_face_area.y) + int(destination_face_area.h)))
 
         self.is_tracking = True
 

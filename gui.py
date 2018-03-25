@@ -139,8 +139,10 @@ class MainWindow(QMainWindow):
 
     def check_box_event(self, check_box):
         if check_box.isChecked():
+            self._capturing._face_swap_on = False
             print("Face swapping turned off")
         else:
+            self._capturing._face_swap_on = True
             print("Face swapping turned on")
 
     def mouseMoveEvent(self, event):
