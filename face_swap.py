@@ -14,48 +14,46 @@ as well as detected proper faces
 
 
 class Tracker:
-    def __init__(self, destination_img, destination_face_area, detection_method, source_img, source_face_area):
+    def __init__(self):
+        self._tracker = None
+        self._source_img = None
+        self._source_face_area = None
+        self.is_tracking = False
+
+    def init_tracker(self, destination_img, destination_face_area, source_img, source_face_area):
         self._tracker = dlib.correlation_tracker()
-        self._face_detector = fd.FaceDetector(detection_method)
         self._source_img = source_img
         self._source_face_area = source_face_area
+        # Define an initial bounding box
         self._tracker.start_track(destination_img,
                                   dlib.rectangle(int(destination_face_area.x) - 10,
                                                  int(destination_face_area.y) - 20,
                                                  int(destination_face_area.x) + int(destination_face_area.w) + 10,
                                                  int(destination_face_area.y) + int(destination_face_area.h) + 20))
-        self.tracking_face = True
 
-    def detect_and_track_faces(self, destination_img, destination_face_area):
-        output_size_width, output_size_height, _ = destination_img.shape
-        base_image = cv2.resize(destination_img, (320, 240))
-        result_image = base_image.copy()
-        output_image = result_image.copy()
-        # Check if the tracker is actively tracking a region in the image
-        if self.tracking_face:
+        self.is_tracking = True
 
-            # Update the tracker and request information about the
-            # quality of the tracking update
-            tracking_quality = self._tracker.update(base_image)
+    def track_and_swap_faces(self, destination_img):
+        # Read a new frame
+        frame = destination_img.copy()
 
-            # If the tracking quality is good enough, determine the
-            # updated position of the tracked region and draw the
-            # rectangle
-            if tracking_quality >= 8.75:
-                tracked_position = self._tracker.get_position()
+        # Update the tracker and request information about the
+        # quality of the tracking update
+        tracking_quality = self._tracker.update(frame)
 
-                destination_face_area.x = int(tracked_position.left())
-                destination_face_area.y = int(tracked_position.top())
-                destination_face_area.w = int(tracked_position.width())
-                destination_face_area.h = int(tracked_position.height())
-                result_image = swap_faces(result_image, destination_face_area, self._source_img, self._source_face_area)
+        # If the tracking quality is good enough, determine the
+        # updated position of the tracked region and draw the
+        # rectangle
+        if tracking_quality >= 8.75:
+            tracked_position = self._tracker.get_position()
+            destination_face_area = fd.FaceArea(int(tracked_position.left()),
+                                                int(tracked_position.top()),
+                                                int(tracked_position.width()),
+                                                int(tracked_position.height()))
 
-            else:
-                self.tracking_face = 0
+            frame = swap_faces(frame, destination_face_area, self._source_img, self._source_face_area)
 
-            output_image = cv2.resize(result_image, (output_size_width, output_size_height))
-
-        return output_image
+        return frame
 
 
 class TrackerOpenCV:
