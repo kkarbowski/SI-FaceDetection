@@ -11,7 +11,7 @@ from PyQt5.QtGui import QImage, QPainter, QPixmap
 
 
 class MainWindow(QMainWindow):
-    BUTTON_X_POS = 30
+    BUTTON_Y_POS = 30
     TEXT_BOX_HEIGHT = 24
     VIDEO_REFRESH_RATE = 60
     VIDEO_WIDTH = 580
@@ -49,16 +49,22 @@ class MainWindow(QMainWindow):
 
         # choose file button
         self._choose_file_button = QtWidgets.QPushButton(self._central_widget)
-        self._choose_file_button.setGeometry(QtCore.QRect(30, self.BUTTON_X_POS, 151, 31))
+        self._choose_file_button.setGeometry(QtCore.QRect(30, self.BUTTON_Y_POS, 151, 31))
         self._choose_file_button.setObjectName("Input_File")
         self._choose_file_button.clicked.connect(self.get_file)
 
         # start button
         self._start_button = QtWidgets.QPushButton(self._central_widget)
-        self._start_button.setGeometry(QtCore.QRect(240, self.BUTTON_X_POS, 151, 31))
+        self._start_button.setGeometry(QtCore.QRect(240, self.BUTTON_Y_POS, 151, 31))
         self._start_button.setObjectName("_push_button_2")
         self._start_button.clicked.connect(self.start_event)
         self._start_button.setCheckable(True)
+
+        # trackers remove button
+        self._trackers_button = QtWidgets.QPushButton(self._central_widget)
+        self._trackers_button.setGeometry(QtCore.QRect(20, 352 , 151, 20))
+        self._trackers_button.setObjectName("Remove_Trackers")
+        self._trackers_button.clicked.connect(self.remove_trackers)
 
         # file input path (text box)
         self._input_box = QtWidgets.QTextEdit(self._central_widget)
@@ -86,7 +92,7 @@ class MainWindow(QMainWindow):
 
         # infos about FR
         self._text_browser = QtWidgets.QTextBrowser(self._central_widget)
-        self._text_browser.setGeometry(QtCore.QRect(20, 220, 381, 221))
+        self._text_browser.setGeometry(QtCore.QRect(20, 220, 381, 121))
         self._text_browser.setObjectName("_text_browser")
         self._text_browser.setText("Information about face detection")
 
@@ -98,7 +104,7 @@ class MainWindow(QMainWindow):
 
         # on/off face swap checkbox
         self._check_box = QtWidgets.QCheckBox(self._central_widget)
-        self._check_box.setGeometry(QtCore.QRect(280, 450, 150, self.TEXT_BOX_HEIGHT))
+        self._check_box.setGeometry(QtCore.QRect(280, 350, 150, self.TEXT_BOX_HEIGHT))
         self._check_box.setObjectName("_check_box")
         self._check_box.stateChanged.connect(lambda: self.check_box_event(self._check_box))
 
@@ -133,6 +139,9 @@ class MainWindow(QMainWindow):
         else:
             self._current_method = DetectionMethods.CNN
         self._capturing.change_method(self._current_method)
+
+    def remove_trackers(self):
+        print("Trackers removed")
 
     def show_frame(self):
         self._capturing.capture()
@@ -205,6 +214,8 @@ class MainWindow(QMainWindow):
         self._choose_file_button.setText(_translate("MainWindow", "Choose input File"))
         self._check_box.setText(_translate("MainWindow", "Turn off face swapping"))
         self._start_button.setText(_translate("MainWindow", "Start/Stop"))
+        self._trackers_button.setText(_translate("MainWindow", "Remove all trackers"))
+
 
 
 class FaceIcon(QLabel):
@@ -225,11 +236,17 @@ class FaceIcon(QLabel):
 
     def detect_face_on_icon(self):
         img = cv2.imread(self._file_name)
+        if img is None:
+            self._parent.send_info("Loading failed")
+            self._face_region = None
+            return False
         face_region, _ = self._parent.face_detector._detect_faces(face_detection.FaceDetector.HAAR_CASCADE, img)
         if face_region is not None:
             self._face_region = face_region[0]
+            return True
         else:
             self._face_region = None
+            return False
 
     def press_method(self, event):
         if event.button() == Qt.LeftButton:
@@ -239,7 +256,10 @@ class FaceIcon(QLabel):
             file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
             if file_name[0] != "":
                 self._file_name = file_name[0]
-                self.detect_face_on_icon()
+
+                # no face found or wrong file
+                if not self.detect_face_on_icon():
+                    return
                 face_icon = QPixmap(file_name[0])
                 self.setPixmap(face_icon.scaled(self.ICON_SIZE, self.ICON_SIZE))
 

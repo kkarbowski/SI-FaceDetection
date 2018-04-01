@@ -52,7 +52,7 @@ class Tracker:
                                                 int(tracked_position.height()))
 
             frame = swap_faces(frame, destination_face_area, self._source_img, self._source_face_area)
-            #frame = face_swap(frame, destination_face_area, self._source_img, self._source_face_area)
+            # frame = face_swap(frame, destination_face_area, self._source_img, self._source_face_area)
 
         return frame
 
@@ -119,20 +119,37 @@ def swap_faces(destination_img, destination_face_area, source_img, source_face_a
     # crop the source face
     source_img_tmp = cv2.cvtColor(source_img, cv2.COLOR_RGB2BGR)
     crop_source_img = source_img_tmp[source_face_area.y:source_face_area.y + source_face_area.h,
-                                 source_face_area.x:source_face_area.x + source_face_area.w]
+                      source_face_area.x:source_face_area.x + source_face_area.w]
+
     # resize and blend the face to be swapped in
     face = cv2.resize(crop_source_img, (destination_face_area.w, destination_face_area.h),
                       interpolation=cv2.INTER_CUBIC)
 
+    # extracting face area
     destination_face = destination_img[destination_face_area.y:destination_face_area.y + destination_face_area.h,
-                                       destination_face_area.x:destination_face_area.x + destination_face_area.w]
+                       destination_face_area.x:destination_face_area.x + destination_face_area.w]
 
-    face = cv2.addWeighted(destination_face, .5, face, .5, 3)
-    # swap faces
+    # mask divisor to get values in range 0..1
+    white_img = np.zeros([destination_face_area.w, destination_face_area.h, 3], dtype=np.uint8)
+    white_img.fill(255)
+
+    # face transparency mask
+    mask = cv2.resize(cv2.imread("mask.png", cv2.IMREAD_COLOR), (destination_face_area.w, destination_face_area.h))
+    mask_invert = cv2.bitwise_not(mask)
+
+    # applying mask and reversed mask
+    face = face * (mask / white_img)
+    destination_face = destination_face * (mask_invert / white_img)
+
+    # swapped face
+    face = cv2.addWeighted(destination_face, 0.99, face, 0.99, 3)
+
+    # replacing face area
     swapped_img = destination_img.copy()
     swapped_img[destination_face_area.y:destination_face_area.y + destination_face_area.h,
                 destination_face_area.x:destination_face_area.x + destination_face_area.w] = face
     return swapped_img
+
 
 '''
 PREDICTOR_PATH = "predictor/shape_predictor_68_face_landmarks.dat"
