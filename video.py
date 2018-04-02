@@ -116,9 +116,11 @@ class Capture:
                 break
         # If we have hit the face with the icon we initialize the tracker
         if is_point_a_face:
-            # Swap those comments to use OpenCV tracker
-            #tracker = fs.TrackerOpenCV()
-            tracker = fs.Tracker()
+            track_method = self._gui.get_track_method()
+            if track_method == TrackingMethods.DLIB:
+                tracker = fs.Tracker()
+            else:
+                tracker = fs.TrackerOpenCV(track_method)
             tracker.init_tracker(self._cv_img, face_position,
                                  self._source_img,
                                  self._source_face_area)

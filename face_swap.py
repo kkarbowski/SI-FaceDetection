@@ -1,3 +1,5 @@
+from enum import Enum
+
 import cv2
 import dlib
 import face_detection as fd
@@ -14,6 +16,16 @@ Class Tracker - it tracks the face and swaps it
 In initializer we initialize the dlib tracker so at this point we have to have the source img and destination img
 as well as detected proper faces
 """
+
+
+class TrackingMethods(Enum):
+    DLIB = 0
+    BOOSTING = 1
+    MIL = 2
+    KCF = 3
+    TLD = 4
+    MEDIANFLOW = 5
+    GOTURN = 6
 
 
 class Tracker:
@@ -63,27 +75,27 @@ class Tracker:
 
 
 class TrackerOpenCV:
-    def __init__(self):
+    def __init__(self, track_method):
         self._source_img = None
         self._source_face_area = None
         self._tracker = None
         self.is_tracking = False
+        self._track_method = TrackingMethods(track_method)
+        #
         self.create_tracker()
 
     def create_tracker(self):
-        tracker_types = ['BOOSTING', 'MIL', 'KCF', 'TLD', 'MEDIANFLOW', 'GOTURN']
-        tracker_type = tracker_types[2]
-        if tracker_type == 'BOOSTING':
+        if self._track_method == TrackingMethods.BOOSTING:
             self._tracker = cv2.TrackerBoosting_create()
-        if tracker_type == 'MIL':
+        if self._track_method == TrackingMethods.MIL:
             self._tracker = cv2.TrackerMIL_create()
-        if tracker_type == 'KCF':
+        if self._track_method == TrackingMethods.KCF:
             self._tracker = cv2.TrackerKCF_create()
-        if tracker_type == 'TLD':
+        if self._track_method == TrackingMethods.TLD:
             self._tracker = cv2.TrackerTLD_create()
-        if tracker_type == 'MEDIANFLOW':
+        if self._track_method == TrackingMethods.MEDIANFLOW:
             self._tracker = cv2.TrackerMedianFlow_create()
-        if tracker_type == 'GOTURN':
+        if self._track_method == TrackingMethods.GOTURN:
             self._tracker = cv2.TrackerGOTURN_create()
 
     def init_tracker(self, destination_img, destination_face_area, source_img, source_face_area):
@@ -128,7 +140,7 @@ def swap_faces(destination_img, destination_face_area, source_img, source_face_a
     # crop the source face
     source_img_tmp = cv2.cvtColor(source_img, cv2.COLOR_RGB2BGR)
     crop_source_img = source_img_tmp[source_face_area.y:source_face_area.y + source_face_area.h,
-                                     source_face_area.x:source_face_area.x + source_face_area.w]
+                      source_face_area.x:source_face_area.x + source_face_area.w]
 
     # resize and blend the face to be swapped in
     face = cv2.resize(crop_source_img, (destination_face_area.w, destination_face_area.h),

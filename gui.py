@@ -2,6 +2,7 @@ import cv2
 import multiprocessing
 
 from face_detection import *
+from face_swap import TrackingMethods
 from video import *
 import face_detection
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -18,6 +19,7 @@ class MainWindow(QMainWindow):
     VIDEO_HEIGHT = 435
     VIDEO_BOX_X = 420
     VIDEO_BOX_Y = 25
+    MESSAGE_BOX_Y_OFFSET = 60
 
     def __init__(self):
         self.face_detector = face_detection.FaceDetector(face_detection.DetectionMethods.HAAR)
@@ -35,6 +37,7 @@ class MainWindow(QMainWindow):
         self._file_path = ""
         self._detection = False
         self._current_method = DetectionMethods.HAAR
+        self._current_track_method = TrackingMethods.DLIB
 
         # video widget
         self._video = QtWidgets.QLabel(self._central_widget)
@@ -62,7 +65,7 @@ class MainWindow(QMainWindow):
 
         # trackers remove button
         self._trackers_button = QtWidgets.QPushButton(self._central_widget)
-        self._trackers_button.setGeometry(QtCore.QRect(20, 352 , 151, 20))
+        self._trackers_button.setGeometry(QtCore.QRect(20, 352 + self.MESSAGE_BOX_Y_OFFSET , 151, 20))
         self._trackers_button.setObjectName("Remove_Trackers")
         self._trackers_button.clicked.connect(self.remove_trackers)
 
@@ -83,28 +86,47 @@ class MainWindow(QMainWindow):
         self._method_label.setObjectName("_method_label")
         self._method_label.setText("Choose a method of face detection:")
 
-        # choose method
+        # choose detection method
         self._method_box = QtWidgets.QComboBox(self._central_widget)
         self._method_box.setGeometry(QtCore.QRect(20, 160, 381, self.TEXT_BOX_HEIGHT))
-        self._method_box.setObjectName("_font_combo_box")
+        self._method_box.setObjectName("_detection_method_box")
         self._method_box.addItems(["Haar cascade", "Lbp cascade", "HOG method(dlib)", "CNN method(dlib)"])
         self._method_box.currentIndexChanged.connect(self.methods_change)
 
+        # text label "Choose a tracking method"
+        self._track_method_label = QtWidgets.QLabel(self._central_widget)
+        self._track_method_label.setGeometry(QtCore.QRect(20, 190, 381, self.TEXT_BOX_HEIGHT))
+        self._track_method_label.setObjectName("_method_label")
+        self._track_method_label.setText("Choose a method of face tracking:")
+
+        # choose tracking method
+        self._track_method_box = QtWidgets.QComboBox(self._central_widget)
+        self._track_method_box.setGeometry(QtCore.QRect(20, 220, 381, self.TEXT_BOX_HEIGHT))
+        self._track_method_box.setObjectName("_tracking_method_box")
+        self._track_method_box.addItems(["Dlib: Correlation Tracker",
+                                         "OpenCV: BOOSTING",
+                                         "OpenCV: MIL",
+                                         "OpenCV: KCF",
+                                         "OpenCV: TLD",
+                                         "OpenCV: MEDIANFLOW",
+                                         "OpenCV: GOTURN"])
+        self._track_method_box.currentIndexChanged.connect(self.track_method_change)
+
         # infos about FR
         self._text_browser = QtWidgets.QTextBrowser(self._central_widget)
-        self._text_browser.setGeometry(QtCore.QRect(20, 220, 381, 121))
+        self._text_browser.setGeometry(QtCore.QRect(20, 220 + self.MESSAGE_BOX_Y_OFFSET, 381, 121))
         self._text_browser.setObjectName("_text_browser")
         self._text_browser.setText("Information about face detection")
 
         # label infos about process of FD
         self._info_label = QtWidgets.QLabel(self._central_widget)
-        self._info_label.setGeometry(QtCore.QRect(20, 190, 381, self.TEXT_BOX_HEIGHT))
+        self._info_label.setGeometry(QtCore.QRect(20, 190 + self.MESSAGE_BOX_Y_OFFSET, 381, self.TEXT_BOX_HEIGHT))
         self._info_label.setObjectName("_info_label")
         self._info_label.setText("Information about face detection:")
 
         # on/off face swap checkbox
         self._check_box = QtWidgets.QCheckBox(self._central_widget)
-        self._check_box.setGeometry(QtCore.QRect(280, 350, 150, self.TEXT_BOX_HEIGHT))
+        self._check_box.setGeometry(QtCore.QRect(280, 350 + self.MESSAGE_BOX_Y_OFFSET, 150, self.TEXT_BOX_HEIGHT))
         self._check_box.setObjectName("_check_box")
         self._check_box.stateChanged.connect(lambda: self.check_box_event(self._check_box))
 
@@ -124,6 +146,12 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self._central_widget)
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
+
+    def track_method_change(self):
+        self._current_track_method = self._track_method_box.currentIndex()
+
+    def get_track_method(self):
+        return self._current_track_method
 
     def send_info(self, info):
         self._text_browser.setText(self._method_box.currentText() + ":\n" + info)
