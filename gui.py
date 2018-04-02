@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
         self._capturing.change_method(self._current_method)
 
     def remove_trackers(self):
-        print("Trackers removed")
+        del self._capturing.get_trackers()[:]
 
     def show_frame(self):
         self._capturing.capture()
@@ -166,9 +166,9 @@ class MainWindow(QMainWindow):
 
     def icon_release_event(self):
         if self._selected_icon is not None:
-            if self._selected_icon._face_region is not None:
-                source_img = cv2.imread(self._selected_icon._file_name)
-                self._capturing.set_tracker(source_img, self._selected_icon._face_region,
+            if self._selected_icon.get_face_region() is not None:
+                source_img = cv2.imread(self._selected_icon.get_file_name())
+                self._capturing.set_tracker(source_img, self._selected_icon.get_face_region(),
                                             self.mouse_x - self.VIDEO_BOX_X, self.mouse_y - self.VIDEO_BOX_Y)
                 self._selected_icon.reset_pos()
 
@@ -184,16 +184,12 @@ class MainWindow(QMainWindow):
                                                       "Image files (*.jpg *.gif *.png *.mp4)")
         self._input_box.setText(self._file_path[0])
 
-    def icon_method(self, event, source_object):
-        print("icon method")
-
     def set_selected_icon(self, selected_icon, x, y):
         self._click_x = x
         self._click_y = y
         self._selected_icon = selected_icon
 
     def start_event(self):
-        print("start")
         if self._input_box.toPlainText() != "":
             self._capturing.change_video_source(self._input_box.toPlainText())
         else:
@@ -215,7 +211,6 @@ class MainWindow(QMainWindow):
         self._check_box.setText(_translate("MainWindow", "Turn off face swapping"))
         self._start_button.setText(_translate("MainWindow", "Start/Stop"))
         self._trackers_button.setText(_translate("MainWindow", "Remove all trackers"))
-
 
 
 class FaceIcon(QLabel):
@@ -250,7 +245,6 @@ class FaceIcon(QLabel):
 
     def press_method(self, event):
         if event.button() == Qt.LeftButton:
-            # print("pressed" + self.objectName())
             self._parent.set_selected_icon(self, event.x(), event.x())
         else:
             file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
@@ -264,7 +258,6 @@ class FaceIcon(QLabel):
                 self.setPixmap(face_icon.scaled(self.ICON_SIZE, self.ICON_SIZE))
 
     def release_method(self, event):
-        # print("released" + self.objectName())
         self._parent.icon_release_event()
         self._parent.delete_selected_icon()
         self.reset_pos()
@@ -274,4 +267,10 @@ class FaceIcon(QLabel):
 
     def reset_pos(self):
         self.set_pos(self._original_pos[0], self._original_pos[1])
+
+    def get_face_region(self):
+        return self._face_region
+
+    def get_file_name(self):
+        return self._file_name
 

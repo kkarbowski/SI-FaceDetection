@@ -91,6 +91,12 @@ class Capture:
             self._process.terminate()
             self._process = None
 
+    def get_trackers(self):
+        return self._trackers
+
+    def set_trackers(self, list_of_trackers):
+        self._trackers = list_of_trackers
+
     def set_tracker(self, source_img, source_face_area, point_x, point_y):
         self._source_face_area = source_face_area
         self._source_img = source_img

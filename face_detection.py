@@ -40,7 +40,7 @@ class FaceDetector:
             self._method = method
 
     def detect(self, que, img_que):
-        while(True):
+        while True:
             try:
                 image = img_que.get(10)
                 if isinstance(image, DetectionMethods):
@@ -63,6 +63,7 @@ class FaceDetector:
 
         gray = cv2.cvtColor(img_copy, cv2.COLOR_RGB2GRAY)
 
+        # minNeighbors - how many positive rectangles must a potentional positive rectangle have
         faces = f_cascade.detectMultiScale(gray, scaleFactor=scale_factor, minNeighbors=5)
         positions_of_faces = []
         for (x, y, w, h) in faces:
