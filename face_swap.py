@@ -3,6 +3,9 @@ import dlib
 import face_detection as fd
 import numpy as np
 
+VIDEO_WIDTH = 580
+VIDEO_HEIGHT = 435
+
 """
 Class Tracker - it tracks the face and swaps it
 
@@ -50,7 +53,11 @@ class Tracker:
                                                 int(tracked_position.width()),
                                                 int(tracked_position.height()))
 
-            frame = swap_faces(frame, destination_face_area, self._source_img, self._source_face_area)
+            if VIDEO_WIDTH > destination_face_area.x + destination_face_area.w \
+                    and destination_face_area.x > 0 \
+                    and destination_face_area.y > 0 \
+                    and destination_face_area.y + destination_face_area.h < VIDEO_HEIGHT:
+                frame = swap_faces(frame, destination_face_area, self._source_img, self._source_face_area)
 
         return frame
 
@@ -101,7 +108,11 @@ class TrackerOpenCV:
         destination_face_area = fd.FaceArea(np.int32(bbox[0]), np.int32(bbox[1]), np.int32(bbox[2]),
                                             np.int32(bbox[3]))
         if ok:
-            frame = swap_faces(frame, destination_face_area, self._source_img, self._source_face_area)
+            if VIDEO_WIDTH > destination_face_area.x + destination_face_area.w \
+                    and destination_face_area.x > 0 \
+                    and destination_face_area.y > 0 \
+                    and destination_face_area.y + destination_face_area.h < VIDEO_HEIGHT:
+                frame = swap_faces(frame, destination_face_area, self._source_img, self._source_face_area)
 
         return frame
 
