@@ -45,10 +45,10 @@ class Capture:
                         if self._try_swapping:
                             self.icon_drag_handler()
 
-                        information = str(self._positions[0].x) + " " + str(self._positions[0].y) + "\n"
+                        information = "Detected %d face(s)\n" % len(self._positions)
                     else:
                         information = "No faces\n"
-                    information += "time for detecting the face: %+2.2f" % time
+                    information += "Detection time: %+2.2f seconds\n" % time
                     self._gui.send_info(information)
                     self._img_queue.put(self._cv_img)
 
