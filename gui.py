@@ -110,6 +110,8 @@ class MainWindow(QMainWindow):
                                          "OpenCV: TLD",
                                          "OpenCV: MEDIANFLOW",
                                          "OpenCV: GOTURN"])
+        # Disable GOTURN method since there is a bug in OpenCV
+        self._track_method_box.model().item(6).setEnabled(False)
         self._track_method_box.currentIndexChanged.connect(self.track_method_change)
 
         # infos about FR
