@@ -151,7 +151,7 @@ def swap_faces(destination_img, destination_face_area, source_img, source_face_a
                                        destination_face_area.x:destination_face_area.x + destination_face_area.w]
 
     # mask divisor to get values in range 0..1
-    white_img = np.zeros([destination_face_area.w, destination_face_area.h, 3], dtype=np.uint8)
+    white_img = np.zeros([destination_face_area.h, destination_face_area.w, 3], dtype=np.uint8)
     white_img.fill(255)
 
     # face transparency mask
