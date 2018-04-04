@@ -266,12 +266,12 @@ class FaceIcon(QLabel):
             self._face_region = None
             return False
         face_region, _ = self._parent.face_detector._detect_faces(face_detection.FaceDetector.HAAR_CASCADE, img)
-        if face_region is not None:
-            self._face_region = face_region[0]
-            return True
-        else:
+        if not face_region:
             self._face_region = None
             return False
+        else:
+            self._face_region = face_region[0]
+            return True
 
     def press_method(self, event):
         if event.button() == Qt.LeftButton:
@@ -279,11 +279,17 @@ class FaceIcon(QLabel):
         else:
             file_name = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "Image files (*.jpg *.gif *.png *.mp4)")
             if file_name[0] != "":
+                # Safe icon properties in case of failure in finding a face on an icon
+                tmp_face_region = self._face_region
+                tmp_file_name = self._file_name
                 self._file_name = file_name[0]
-
                 # no face found or wrong file
                 if not self.detect_face_on_icon():
+                    # Restore icon properties
+                    self._file_name = tmp_file_name
+                    self._face_region = tmp_face_region
                     return
+
                 face_icon = QPixmap(file_name[0])
                 self.setPixmap(face_icon.scaled(self.ICON_SIZE, self.ICON_SIZE))
 
