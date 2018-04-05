@@ -44,6 +44,7 @@ class Capture:
                         # and if so set the tracker
                         if self._try_swapping:
                             self.icon_drag_handler()
+                        self._try_swapping = False
 
                         information = "Detected %d face(s)\n" % len(self._positions)
                     else:
@@ -65,7 +66,7 @@ class Capture:
                             self._cv_img = tracker.track_and_swap_faces(self._cv_img)
 
                 self.show_frame()
-                self._try_swapping = False
+
             else:
                 self._gui.turn_off_detection()
 
