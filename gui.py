@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
     VIDEO_WIDTH = 580
     VIDEO_HEIGHT = 435
     VIDEO_BOX_X = 420
-    VIDEO_BOX_Y = 25
+    VIDEO_BOX_Y = 15
     MESSAGE_BOX_Y_OFFSET = 60
 
     def __init__(self):
@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
 
         QMainWindow.__init__(self)
         self.setObjectName("Face Swaping Application")
-        self.resize(1024, 768)
+        self.resize(1024, 700)
         self._central_widget = QtWidgets.QWidget(self)
         self._central_widget.setObjectName("_central_widget")
         self._selected_icon = None
@@ -139,9 +139,9 @@ class MainWindow(QMainWindow):
         self._face_slot = []
         for i in range(0, 14):
             if i < 7:
-                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + i * 134, 510, pic_face, i, "bach.jpg"))
+                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + i * 134, 470, pic_face, i, "bach.jpg"))
             else:
-                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + (i - 7) * 134, 630, pic_face, i,
+                self._face_slot.append(FaceIcon(self, self._central_widget, 53 + (i - 7) * 134, 585, pic_face, i,
                                                 "bach.jpg"))
 
         # rest ~~~~~
