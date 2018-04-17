@@ -14,7 +14,7 @@ from PyQt5.QtGui import QImage, QPainter, QPixmap
 class MainWindow(QMainWindow):
     BUTTON_Y_POS = 30
     TEXT_BOX_HEIGHT = 24
-    VIDEO_REFRESH_RATE = 60
+    VIDEO_REFRESH_RATE = 30
     VIDEO_WIDTH = 580
     VIDEO_HEIGHT = 435
     VIDEO_BOX_X = 420
